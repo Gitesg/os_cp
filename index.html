@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priority Scheduling Simulation</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="container">
+    <div class="algorithm-selector">
+      <label>Select Algorithm:</label>
+      <label><input type="radio" name="algorithm" value="priority" checked>Priority Scheduling</label>
+    </div>
+    <div class="process-input">
+      <input type="text" id="processName" placeholder="Process Name">
+      <input type="number" id="arrivalTime" placeholder="Arrival Time">
+      <input type="number" id="burstTime" placeholder="Burst Time">
+      <input type="number" id="priority" placeholder="Priority">
+      <button id="addProcessButton">Add Process</button>
+    </div>
+    <button id="startButton">Start Simulation</button>
+    <div class="scheduler"></div>
+    <div class="gantt-chart"></div> <!-- New Gantt chart area -->
+    <canvas id="chart"></canvas>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>
