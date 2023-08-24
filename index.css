@@ -1,82 +1,82 @@
-body {
-    font-family: Arial, sans-serif;
+/* Reset some default styles */
+body, h1, h2, h3, p, ul, li {
     margin: 0;
     padding: 0;
   }
   
+  /* Basic styling */
   .container {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   }
   
-  .algorithm-selector {
+  .input-section {
+    margin-bottom: 20px;
+  }
+  
+  .algorithm-selection {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
-  }
-  
-  .process-input {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  
-  .process-input input[type="text"],
-  .process-input input[type="number"] {
-    padding: 5px;
-    margin-right: 10px;
-    width: 100px;
-  }
-  
-  .process-input button {
-    padding: 5px 10px;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    cursor: pointer;
+    justify-content: space-between;
+    margin-bottom: 20px;
   }
   
   .scheduler {
     display: flex;
     align-items: center;
-    margin-top: 20px;
-    position: relative;
-  }
-  
-  .scheduler .progress-bar {
-    position: absolute;
-    height: 5px;
-    width: 0;
-    background-color: #007bff;
-  }
-  
-  .scheduler .process {
+    justify-content: flex-start;
+    height: 50px;
+    border: 1px solid #ddd;
     padding: 10px;
-    border-radius: 5px;
-    margin-right: 5px;
   }
   
-  .scheduler .process.running {
-    background-color: rgba(0, 123, 255, 0.8);
-  }
-  
-  .gantt-chart {
+  .task {
     display: flex;
     align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0 5px;
+    border-right: 1px solid #ddd;
+  }
+  
+  .tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px;
+    display: none;
+    border-radius: 5px;
+    z-index: 1;
+  }
+  
+  .progress-container {
+    position: relative;
+    width: 100%;
+    height: 30px;
+    background-color: #eee;
     margin-top: 20px;
   }
   
-  .gantt-bar {
-    height: 20px;
-    margin-right: 5px;
-    border: 1px solid #000;
+  .progress-bar {
+    width: 0;
+    height: 100%;
+    background-color: #007bff;
+    transition: width 0.5s;
   }
   
-  #chart {
-    margin-top: 20px;
+  .clock {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    font-size: 12px;
+  }
+  
+  /* Additional information */
+  .additional-info {
+    display: none;
+    margin-top: 10px;
+    font-size: 14px;
   }
   

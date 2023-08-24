@@ -1,173 +1,183 @@
-// script.js
-
-const processes = [];
+// HTML elements
+const inputSection = document.querySelector('.input-section');
+const addTaskBtn = document.getElementById('addTaskBtn');
+const algorithmSelect = document.getElementById('algorithm');
+const startBtn = document.getElementById('startBtn');
 const scheduler = document.querySelector('.scheduler');
-const startButton = document.getElementById('startButton');
-const addProcessButton = document.getElementById('addProcessButton');
-const algorithmRadios = document.getElementsByName('algorithm');
-const chartCanvas = document.getElementById('chart');
-const processNameInput = document.getElementById('processName');
-const arrivalTimeInput = document.getElementById('arrivalTime');
-const burstTimeInput = document.getElementById('burstTime');
-const priorityInput = document.getElementById('priority');
-const ganttChart = document.querySelector('.gantt-chart');
+const tooltip = document.querySelector('.tooltip');
+const progressBar = document.querySelector('.progress-bar');
+const clock = document.querySelector('.clock');
+const showAdditionalInfoCheckbox = document.getElementById('showAdditionalInfo');
 
-startButton.addEventListener('click', startSimulation);
-addProcessButton.addEventListener('click', addProcess);
+// Task list
+const tasks = [];
 
-function clearScheduler() {
-  scheduler.innerHTML = '';
-}
+// Event listeners
+addTaskBtn.addEventListener('click', addTask);
+startBtn.addEventListener('click', startSimulation);
 
-function runProcess(process, currentTime) {
-  const processElement = document.createElement('div');
-  processElement.classList.add('process');
-  processElement.textContent = process.name;
-  processElement.style.backgroundColor = getColorByPriority(process.priority);
-  processElement.style.transitionDuration = `${process.burstTime}s`;
+// Function to add a task
+function addTask() {
+  const taskName = document.getElementById('taskName').value;
+  const arrivalTime = parseInt(document.getElementById('arrivalTime').value);
+  const burstTime = parseInt(document.getElementById('burstTime').value);
+  const priority = parseInt(document.getElementById('priority').value);
 
-  scheduler.appendChild(processElement);
-
-  const progressBar = document.querySelector('.progress-bar');
-  progressBar.style.transitionDuration = `${process.burstTime}s`;
-  progressBar.style.width = '100%';
-
-  // Add Gantt chart bar
-  const ganttBar = document.createElement('div');
-  ganttBar.classList.add('gantt-bar');
-  ganttBar.style.backgroundColor = getColorByPriority(process.priority);
-  ganttBar.style.width = `${process.burstTime * 40}px`; // Adjust width as needed
-  ganttChart.appendChild(ganttBar);
-
-  setTimeout(() => {
-    progressBar.style.width = '0';
-    scheduler.removeChild(processElement);
-    ganttChart.removeChild(ganttBar);
-  }, process.burstTime * 1000);
-}
-
-function getColorByPriority(priority) {
-  switch (priority) {
-    case 1:
-      return 'red';
-    case 2:
-      return 'orange';
-    case 3:
-      return 'yellow';
-    case 4:
-      return 'green';
-    default:
-      return 'blue';
+  if (taskName && !isNaN(arrivalTime) && !isNaN(burstTime) && !isNaN(priority)) {
+    tasks.push({ name: taskName, arrivalTime, burstTime, priority });
+    updateTaskList();
   }
 }
 
+// Function to update the task list display
+function updateTaskList() {
+  const taskList = document.createElement('ul');
+  tasks.forEach(task => {
+    const taskItem = document.createElement('li');
+    taskItem.textContent = `${task.name} (Arrival: ${task.arrivalTime} ms, Burst: ${task.burstTime} ms, Priority: ${task.priority})`;
+    taskList.appendChild(taskItem);
+  });
+  inputSection.appendChild(taskList);
+}
+
+// Function to start the simulation based on selected algorithm
 function startSimulation() {
-  startButton.disabled = true;
+  const selectedAlgorithm = algorithmSelect.value;
 
-  let selectedAlgorithm;
-  for (const radio of algorithmRadios) {
-    if (radio.checked) {
-      selectedAlgorithm = radio.value;
-      break;
+  if (selectedAlgorithm === 'fcfs') {
+    simulateFCFS();
+  } else if (selectedAlgorithm === 'pq') {
+    simulatePriority();
+  } else if (selectedAlgorithm === 'rr') {
+    simulateRoundRobin();
+  }
+}
+
+// FCFS Simulation
+function simulateFCFS() {
+  tasks.sort((a, b) => a.arrivalTime - b.arrivalTime);
+  const ganttChart = [];
+  let currentTime = tasks[0].arrivalTime;
+
+  while (tasks.length > 0) {
+    const availableTasks = tasks.filter(task => task.arrivalTime <= currentTime);
+
+    if (availableTasks.length === 0) {
+      currentTime++;
+      continue;
     }
+
+    const currentTask = availableTasks.shift();
+
+    ganttChart.push({ name: currentTask.name, start: currentTime });
+    currentTime += currentTask.burstTime;
+    ganttChart.push({ name: 'Idle', start: currentTime });
+
+    const taskIndex = tasks.findIndex(task => task.name === currentTask.name);
+    const task = tasks.splice(taskIndex, 1)[0];
+    task.waitingTime = currentTime - task.arrivalTime - task.burstTime;
+    task.turnaroundTime = task.waitingTime + task.burstTime;
   }
 
-  switch (selectedAlgorithm) {
-    case 'priority':
-      scheduleProcessesByPriority();
-      break;
-    default:
-      break;
+  visualizeGanttChart(ganttChart);
+}
+
+// Priority Simulation
+function simulatePriority() {
+  tasks.sort((a, b) => a.arrivalTime - b.arrivalTime);
+  const ganttChart = [];
+  let currentTime = tasks[0].arrivalTime;
+
+  while (tasks.length > 0) {
+    const availableTasks = tasks.filter(task => task.arrivalTime <= currentTime);
+
+    if (availableTasks.length === 0) {
+      currentTime++;
+      continue;
+    }
+
+    const highestPriorityTask = availableTasks.reduce((highest, task) => task.priority < highest.priority ? task : highest, availableTasks[0]);
+
+    ganttChart.push({ name: highestPriorityTask.name, start: currentTime });
+    currentTime += highestPriorityTask.burstTime;
+    ganttChart.push({ name: 'Idle', start: currentTime });
+
+    const taskIndex = tasks.findIndex(task => task.name === highestPriorityTask.name);
+    const task = tasks.splice(taskIndex, 1)[0];
+    task.waitingTime = currentTime - task.arrivalTime - task.burstTime;
+    task.turnaroundTime = task.waitingTime + task.burstTime;
   }
+
+  visualizeGanttChart(ganttChart);
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function scheduleProcessesByPriority() {
-  const sortedProcesses = [...processes].sort((a, b) => a.priority - b.priority);
+// Round Robin Simulation
+function simulateRoundRobin() {
+  const timeQuantum = 4;
+  let ganttChart = [];
   let currentTime = 0;
+  let queue = [...tasks];
 
-  for (const process of sortedProcesses) {
-    if (process.arrivalTime > currentTime) {
-      currentTime = process.arrivalTime;
+  while (queue.length > 0) {
+    const currentTask = queue.shift();
+
+    if (currentTask.burstTime > timeQuantum) {
+      ganttChart.push({ name: currentTask.name, start: currentTime });
+      currentTime += timeQuantum;
+      ganttChart.push({ name: 'Idle', start: currentTime });
+      currentTask.burstTime -= timeQuantum;
+      queue.push(currentTask);
+    } else {
+      ganttChart.push({ name: currentTask.name, start: currentTime });
+      currentTime += currentTask.burstTime;
+      ganttChart.push({ name: 'Idle', start: currentTime });
+
+      const taskIndex = tasks.findIndex(task => task.name === currentTask.name);
+      const task = tasks.splice(taskIndex, 1)[0];
+      task.waitingTime = currentTime - task.arrivalTime - task.burstTime;
+      task.turnaroundTime = task.waitingTime + task.burstTime;
     }
-
-    runProcess(process, currentTime);
-    process.color = getColorByPriority(process.priority);
-    scheduler.lastChild.classList.add('running');
-    await sleep(process.burstTime * 1000);
-    scheduler.lastChild.classList.remove('running');
-
-    currentTime += process.burstTime;
-    await sleep(1000);
   }
 
-  startButton.disabled = false;
+  visualizeGanttChart(ganttChart);
 }
 
-function updateChart(completionTimes) {
-  const labels = processes.map(process => process.name);
+// Function to visualize the Gantt chart
+function visualizeGanttChart(ganttChart) {
+  scheduler.innerHTML = '';
+  progressBar.style.width = '0';
+  clock.textContent = 'Time: 0 ms';
 
-  const chartData = {
-    labels: labels,
-    datasets: [
-      {
-        label: 'Completion Times',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-        data: completionTimes,
-      },
-    ],
-  };
+  ganttChart.forEach((entry, index) => {
+    const taskElement = document.createElement('div');
+    taskElement.classList.add('task');
+    taskElement.style.width = entry.start + 'px';
+    taskElement.textContent = entry.name;
+    scheduler.appendChild(taskElement);
 
-  const chartOptions = {
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
+    taskElement.addEventListener('mouseenter', () => {
+      tooltip.textContent = `Waiting Time: ${tasks[index / 2].waitingTime} ms | Turnaround Time: ${tasks[index / 2].turnaroundTime} ms`;
+      tooltip.style.display = 'block';
+    });
 
-  new Chart(chartCanvas, {
-    type: 'bar',
-    data: chartData,
-    options: chartOptions,
+    taskElement.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+
+    setTimeout(() => {
+      taskElement.style.backgroundColor = '#ff6666';
+      setTimeout(() => {
+        taskElement.style.backgroundColor = '#66cc66';
+      }, 500);
+    }, index * 1000);
   });
 }
 
-function addProcess() {
-  const processName = processNameInput.value;
-  const arrivalTime = parseInt(arrivalTimeInput.value);
-  const burstTime = parseInt(burstTimeInput.value);
-  const priority = parseInt(priorityInput.value);
-
-  if (processName && !isNaN(arrivalTime) && !isNaN(burstTime) && !isNaN(priority)) {
-    const newProcess = { name: processName, arrivalTime, burstTime, priority };
-    processes.push(newProcess);
-    processNameInput.value = '';
-    arrivalTimeInput.value = '';
-    burstTimeInput.value = '';
-    priorityInput.value = '';
-    console.log('New process added:', newProcess);
-
-    // Create a new row for adding processes dynamically
-    const newRow = document.createElement('div');
-    newRow.classList.add('process-input');
-    newRow.innerHTML = `
-      <input type="text" id="processName" placeholder="Process Name">
-      <input type="number" id="arrivalTime" placeholder="Arrival Time">
-      <input type="number" id="burstTime" placeholder="Burst Time">
-      <input type="number" id="priority" placeholder="Priority">
-      <button id="addProcessButton">Add Process</button>
-    `;
-
-    // Append the new row after the existing process input row
-    const container = document.querySelector('.container');
-    container.insertBefore(newRow, addProcessButton.parentElement.nextSibling);
-  } else {
-    console.log('Invalid input for new process.');
-  }
+// Event listener to show/hide additional information
+showAdditionalInfoCheckbox.addEventListener('change', function() {
+  const additionalInfo = document.querySelectorAll('.additional-info');
+  additionalInfo.forEach(info => {
+    info.style.display = this.checked ? 'block' : 'none';
+  });
 }
+)
